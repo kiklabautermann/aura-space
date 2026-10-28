@@ -1,0 +1,32 @@
+[package]
+name = "aura-verb"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+nih_plug_vizia = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+atomic_float = "1.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dirs = "5.0"
+rfd = "0.14"
+
+[dev-dependencies]
+libloading = "0.8"
+clap-sys = { git = "https://github.com/micahrj/clap-sys.git" }
+
+[workspace]
+members = [".", "xtask"]
+
+# Production Release Profile (Clean, stripped, maximum compiler optimization)
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+debug = false
+panic = "abort"
