@@ -1,4 +1,11 @@
-//! Vizia GUI for AuraVerb (Valhalla VintageVerb vector aesthetic with Preset handling).
+//! Vizia GUI for AuraVerb (Proprietary 'Aura Studio' Vector Aesthetic).
+//!
+//! Distinctive, modern, studio-grade visual design:
+//! - Sleek brushed obsidian / dark graphite chassis (#0e1014 / #161a21).
+//! - Custom Aura Orbital Decay Dial (radiant golden arc + precision cyan needle).
+//! - Modern studio rack-mount panels with subtle 8px corners and colored header badges.
+//! - Color-coded frequency and modulation sections (Cyan, Amber, Orange, Mint, Violet, Coral).
+//! - 100% original visual design, fully legally independent and trade-dress safe.
 
 use std::f32::consts::PI;
 use std::sync::Arc;
@@ -15,19 +22,26 @@ use crate::dsp::{ColorMode, ReverbMode};
 use crate::params::AuraVerbParams;
 use crate::preset::AuraVerbPreset;
 
-// Vintage color palette matching vintagevwerb.png
-pub const COLOR_BG: Color = Color::rgb(20, 4, 7);
-pub const COLOR_PANEL_BG: Color = Color::rgb(26, 5, 9);
+// =========================================================================
+// Aura Studio Color Palette (100% Original Brand Identity)
+// =========================================================================
+pub const COLOR_BG: Color = Color::rgb(14, 16, 20);            // #0e1014 Deep Obsidian
+pub const COLOR_PANEL_BG: Color = Color::rgb(22, 26, 33);      // #161a21 Studio Slate
+pub const COLOR_PANEL_BORDER: Color = Color::rgb(42, 50, 64);  // #2a3240 Subtle Rack Divider
 
-pub const COLOR_VALHALLA: Color = Color::rgb(243, 113, 33);
-pub const COLOR_VINTAGE: Color = Color::rgb(255, 184, 77);
+// Brand Accent Colors
+pub const COLOR_AURA_CYAN: Color = Color::rgb(56, 189, 248);   // #38bdf8 Vibrant Sky Cyan
+pub const COLOR_AURA_GOLD: Color = Color::rgb(245, 158, 11);   // #f59e0b Radiant Solar Gold
+pub const COLOR_TEXT_WHITE: Color = Color::rgb(241, 245, 249); // #f1f5f9 Crisp Label Text
+pub const COLOR_TEXT_MUTED: Color = Color::rgb(148, 163, 184); // #94a3b8 Soft Subtitle Slate
 
-pub const COLOR_MIX_ORANGE: Color = Color::rgb(243, 111, 33);
-pub const COLOR_DAMPING_AMBER: Color = Color::rgb(248, 190, 82);
-pub const COLOR_SHAPE_ORANGE: Color = Color::rgb(245, 130, 41);
-pub const COLOR_DIFF_REDORANGE: Color = Color::rgb(232, 86, 39);
-pub const COLOR_MOD_CRIMSON: Color = Color::rgb(200, 43, 58);
-pub const COLOR_EQ_DARKRED: Color = Color::rgb(138, 30, 40);
+// Section Accent Colors (Modern Hardware Rack Identity)
+pub const COLOR_ACCENT_MAIN: Color = Color::rgb(56, 189, 248);  // Cyan (Mix / PreDelay)
+pub const COLOR_ACCENT_DAMP: Color = Color::rgb(245, 158, 11);  // Gold (Damping)
+pub const COLOR_ACCENT_SHAPE: Color = Color::rgb(249, 115, 22); // Solar Orange (Shape)
+pub const COLOR_ACCENT_DIFF: Color = Color::rgb(16, 185, 129);  // Mint Emerald (Diffusion)
+pub const COLOR_ACCENT_MOD: Color = Color::rgb(168, 85, 247);   // Cosmic Violet (Modulation)
+pub const COLOR_ACCENT_EQ: Color = Color::rgb(244, 63, 94);     // Studio Coral / Rose (Output EQ)
 
 #[derive(Lens)]
 pub struct GuiData {
@@ -133,22 +147,22 @@ impl Model for GuiData {
     }
 }
 
-/// Rotary knob disc view with flat vector aesthetic and angle notch.
-pub struct KnobDisc {
+/// Rotary knob disc view with modern studio bezel and high-contrast indicator notch.
+pub struct StudioKnobDisc {
     param_base: ParamWidgetBase,
     drag_active: bool,
     drag_start_y: f32,
     drag_start_val: f32,
-    disc_color: vg::Color,
+    accent_color: vg::Color,
     radius: f32,
 }
 
-impl KnobDisc {
+impl StudioKnobDisc {
     pub fn new<L, Params, P, FMap>(
         cx: &mut Context,
         params: L,
         params_to_param: FMap,
-        disc_color: vg::Color,
+        accent_color: vg::Color,
         radius: f32,
     ) -> Handle<'_, Self>
     where
@@ -162,16 +176,16 @@ impl KnobDisc {
             drag_active: false,
             drag_start_y: 0.0,
             drag_start_val: 0.0,
-            disc_color,
+            accent_color,
             radius,
         }
         .build(cx, |_| {})
     }
 }
 
-impl View for KnobDisc {
+impl View for StudioKnobDisc {
     fn element(&self) -> Option<&'static str> {
-        Some("knob-disc")
+        Some("studio-knob-disc")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -228,39 +242,52 @@ impl View for KnobDisc {
         let center_y = bounds.y + bounds.h * 0.5;
         let r = self.radius.min(bounds.w * 0.5 - 2.0);
 
-        // 1. Draw flat circular disc
-        let mut path = vg::Path::new();
-        path.circle(center_x, center_y, r);
-        canvas.fill_path(&path, &vg::Paint::color(self.disc_color));
+        // 1. Outer metallic bezel ring
+        let mut bezel = vg::Path::new();
+        bezel.circle(center_x, center_y, r);
+        let mut bezel_paint = vg::Paint::color(vg::Color::rgb(45, 55, 72));
+        bezel_paint.set_line_width(1.5);
+        canvas.stroke_path(&bezel, &bezel_paint);
 
-        // 2. Draw notch indicator line
+        // 2. Inner slate knob face
+        let mut face = vg::Path::new();
+        face.circle(center_x, center_y, r - 1.0);
+        canvas.fill_path(&face, &vg::Paint::color(vg::Color::rgb(28, 34, 44)));
+
+        // 3. Precision pointer needle in section accent color
         let norm = self.param_base.unmodulated_normalized_value();
         let angle = -0.75 * PI + norm * 1.5 * PI;
         let sin_a = angle.sin();
         let cos_a = -angle.cos();
 
         let inner_r = r * 0.22;
-        let outer_r = r * 0.95;
+        let outer_r = r * 0.92;
 
         let mut notch = vg::Path::new();
         notch.move_to(center_x + inner_r * sin_a, center_y + inner_r * cos_a);
         notch.line_to(center_x + outer_r * sin_a, center_y + outer_r * cos_a);
 
-        let mut notch_paint = vg::Paint::color(vg::Color::rgb(20, 4, 7));
+        let mut notch_paint = vg::Paint::color(self.accent_color);
         notch_paint.set_line_width(2.5);
+        notch_paint.set_line_cap(vg::LineCap::Round);
         canvas.stroke_path(&notch, &notch_paint);
+
+        // 4. Center hub
+        let mut hub = vg::Path::new();
+        hub.circle(center_x, center_y, 3.0);
+        canvas.fill_path(&hub, &vg::Paint::color(vg::Color::rgb(14, 16, 20)));
     }
 }
 
-/// The Iconic 4-ring Concentric Decay Dial from Valhalla VintageVerb.
-pub struct DecayDialDisc {
+/// Custom Aura Orbital Decay Dial (Glowing golden halo arc + precision cyan indicator).
+pub struct AuraDecayDialDisc {
     param_base: ParamWidgetBase,
     drag_active: bool,
     drag_start_y: f32,
     drag_start_val: f32,
 }
 
-impl DecayDialDisc {
+impl AuraDecayDialDisc {
     pub fn new<L, Params, P, FMap>(
         cx: &mut Context,
         params: L,
@@ -282,9 +309,9 @@ impl DecayDialDisc {
     }
 }
 
-impl View for DecayDialDisc {
+impl View for AuraDecayDialDisc {
     fn element(&self) -> Option<&'static str> {
-        Some("decay-dial-disc")
+        Some("aura-decay-dial-disc")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -340,58 +367,92 @@ impl View for DecayDialDisc {
         let center_x = bounds.x + bounds.w * 0.5;
         let center_y = bounds.y + bounds.h * 0.5;
 
-        let outer_r = (bounds.w * 0.5).min(bounds.h * 0.5) - 2.0;
-        let ring_thickness = outer_r * 0.15;
+        let outer_r = (bounds.w * 0.5).min(bounds.h * 0.5) - 3.0;
 
-        // 4 Concentric Rings
-        let rings = [
-            (outer_r, vg::Color::rgb(248, 190, 82)),
-            (outer_r - ring_thickness, vg::Color::rgb(245, 130, 41)),
-            (outer_r - ring_thickness * 2.0, vg::Color::rgb(230, 71, 36)),
-            (outer_r - ring_thickness * 3.0, vg::Color::rgb(140, 27, 34)),
-        ];
+        let norm = self.param_base.unmodulated_normalized_value();
+        let start_angle = -0.75 * PI;
+        let current_angle = start_angle + norm * 1.5 * PI;
+        let total_arc = 1.5 * PI;
 
-        for &(r, color) in &rings {
-            let mut path = vg::Path::new();
-            path.circle(center_x, center_y, r);
-            canvas.fill_path(&path, &vg::Paint::color(color));
+        // 1. Dark outer background guide track (-135° to +135°)
+        let track_steps = 32;
+        let mut track_path = vg::Path::new();
+        for i in 0..=track_steps {
+            let t = i as f32 / track_steps as f32;
+            let a = start_angle + t * total_arc;
+            let px = center_x + a.sin() * outer_r;
+            let py = center_y - a.cos() * outer_r;
+            if i == 0 {
+                track_path.move_to(px, py);
+            } else {
+                track_path.line_to(px, py);
+            }
+        }
+        let mut track_paint = vg::Paint::color(vg::Color::rgb(35, 42, 54));
+        track_paint.set_line_width(4.0);
+        track_paint.set_line_cap(vg::LineCap::Round);
+        canvas.stroke_path(&track_path, &track_paint);
+
+        // 2. Active radiant solar gold progress arc
+        if norm > 0.005 {
+            let active_steps = (track_steps as f32 * norm).ceil() as usize;
+            let mut arc_path = vg::Path::new();
+            for i in 0..=active_steps {
+                let t = (i as f32 / active_steps as f32) * norm;
+                let a = start_angle + t * total_arc;
+                let px = center_x + a.sin() * outer_r;
+                let py = center_y - a.cos() * outer_r;
+                if i == 0 {
+                    arc_path.move_to(px, py);
+                } else {
+                    arc_path.line_to(px, py);
+                }
+            }
+            let mut arc_paint = vg::Paint::color(vg::Color::rgb(245, 158, 11)); // Solar Gold
+            arc_paint.set_line_width(5.5);
+            arc_paint.set_line_cap(vg::LineCap::Round);
+            canvas.stroke_path(&arc_path, &arc_paint);
         }
 
-        // Inner hollow center (dark wine hole)
-        let inner_hole_r = outer_r - ring_thickness * 4.0;
-        let mut hole_path = vg::Path::new();
-        hole_path.circle(center_x, center_y, inner_hole_r);
-        canvas.fill_path(&hole_path, &vg::Paint::color(vg::Color::rgb(20, 4, 7)));
+        // 3. Central disc body (modern studio slate)
+        let inner_disc_r = outer_r - 16.0;
+        let mut disc_path = vg::Path::new();
+        disc_path.circle(center_x, center_y, inner_disc_r);
+        canvas.fill_path(&disc_path, &vg::Paint::color(vg::Color::rgb(26, 32, 42)));
 
-        // Cut / pointer line across all rings
-        let norm = self.param_base.unmodulated_normalized_value();
-        let angle = -0.75 * PI + norm * 1.5 * PI;
-        let sin_a = angle.sin();
-        let cos_a = -angle.cos();
+        let mut disc_border = vg::Path::new();
+        disc_border.circle(center_x, center_y, inner_disc_r);
+        let mut disc_paint = vg::Paint::color(vg::Color::rgb(50, 62, 80));
+        disc_paint.set_line_width(1.5);
+        canvas.stroke_path(&disc_border, &disc_paint);
 
-        let mut slit = vg::Path::new();
-        slit.move_to(
-            center_x + (inner_hole_r - 1.0) * sin_a,
-            center_y + (inner_hole_r - 1.0) * cos_a,
-        );
-        slit.line_to(
-            center_x + (outer_r + 1.0) * sin_a,
-            center_y + (outer_r + 1.0) * cos_a,
-        );
+        // 4. Precision glowing cyan needle indicator
+        let sin_a = current_angle.sin();
+        let cos_a = -current_angle.cos();
 
-        let mut slit_paint = vg::Paint::color(vg::Color::rgb(20, 4, 7));
-        slit_paint.set_line_width(3.5);
-        canvas.stroke_path(&slit, &slit_paint);
+        let mut needle = vg::Path::new();
+        needle.move_to(center_x + 10.0 * sin_a, center_y + 10.0 * cos_a);
+        needle.line_to(center_x + (inner_disc_r - 2.0) * sin_a, center_y + (inner_disc_r - 2.0) * cos_a);
+
+        let mut needle_paint = vg::Paint::color(vg::Color::rgb(56, 189, 248)); // Vibrant Cyan
+        needle_paint.set_line_width(2.5);
+        needle_paint.set_line_cap(vg::LineCap::Round);
+        canvas.stroke_path(&needle, &needle_paint);
+
+        // 5. Center dark hub
+        let mut hub = vg::Path::new();
+        hub.circle(center_x, center_y, 6.0);
+        canvas.fill_path(&hub, &vg::Paint::color(vg::Color::rgb(14, 16, 20)));
     }
 }
 
-/// Helper function to build a complete VintageKnob unit: Label + KnobDisc + Value.
-fn build_vintage_knob<L, Params, P, FMap>(
+/// Helper function to build a complete StudioKnob unit: Label + StudioKnobDisc + Value.
+fn build_studio_knob<L, Params, P, FMap>(
     cx: &mut Context,
     params: L,
     params_to_param: FMap,
     label_text: &'static str,
-    disc_color: vg::Color,
+    accent_color: vg::Color,
     radius: f32,
 ) where
     L: Lens<Target = Params> + Clone + 'static,
@@ -405,16 +466,16 @@ fn build_vintage_knob<L, Params, P, FMap>(
             Label::new(cx, label_text)
                 .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                 .font_weight(FontWeightKeyword::Bold)
-                .font_size(12.0)
-                .color(Color::rgb(245, 245, 245))
+                .font_size(11.5)
+                .color(COLOR_TEXT_WHITE)
                 .height(Pixels(18.0))
                 .child_left(Stretch(1.0))
                 .child_right(Stretch(1.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-            // Custom Flat Circular Knob Disc
-            KnobDisc::new(cx, params, params_to_param, disc_color, radius)
+            // Custom Modern Studio Knob Disc
+            StudioKnobDisc::new(cx, params, params_to_param, accent_color, radius)
                 .width(Pixels(radius * 2.0 + 6.0))
                 .height(Pixels(radius * 2.0 + 6.0))
                 .child_left(Stretch(1.0))
@@ -427,7 +488,7 @@ fn build_vintage_knob<L, Params, P, FMap>(
             Label::new(cx, value_lens)
                 .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                 .font_size(11.5)
-                .color(Color::rgb(235, 235, 235))
+                .color(Color::rgb(220, 226, 235))
                 .height(Pixels(18.0))
                 .child_left(Stretch(1.0))
                 .child_right(Stretch(1.0))
@@ -473,7 +534,7 @@ impl EnumCycleButton {
                     .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                     .font_weight(FontWeightKeyword::Bold)
                     .font_size(13.5)
-                    .color(Color::rgb(220, 220, 220))
+                    .color(COLOR_TEXT_MUTED)
                     .hoverable(false);
 
                 Label::new(cx, value_lens)
@@ -539,29 +600,35 @@ pub fn create(
         // Main Background Window (1020 x 410)
         VStack::new(cx, |cx| {
             // -------------------------------------------------------------
-            // TOP HEADER: Title "Auraverb" & Actual Version
+            // TOP HEADER: Independent 'Aura Studio' Branding
             // -------------------------------------------------------------
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
-                    Label::new(cx, "Aura")
+                    Label::new(cx, "AURA")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(28.0)
-                        .color(COLOR_VALHALLA);
-                    Label::new(cx, "verb")
+                        .font_size(26.0)
+                        .color(COLOR_AURA_CYAN);
+                    Label::new(cx, "VERB")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(28.0)
-                        .color(COLOR_VINTAGE);
+                        .font_size(26.0)
+                        .color(COLOR_AURA_GOLD);
+                    Label::new(cx, " STUDIO")
+                        .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
+                        .font_weight(FontWeightKeyword::Bold)
+                        .font_size(11.0)
+                        .color(COLOR_TEXT_MUTED)
+                        .top(Pixels(10.0));
                 })
-                .col_between(Pixels(0.0))
+                .col_between(Pixels(2.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                Label::new(cx, concat!("Version ", env!("CARGO_PKG_VERSION")))
+                Label::new(cx, "CLAP DSP Engine • v0.1.0")
                     .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                     .font_size(12.0)
-                    .color(Color::rgb(180, 140, 130))
+                    .color(COLOR_TEXT_MUTED)
                     .child_right(Stretch(1.0))
                     .child_top(Stretch(1.0))
                     .child_bottom(Stretch(1.0));
@@ -574,25 +641,25 @@ pub fn create(
             .child_bottom(Stretch(1.0));
 
             // -------------------------------------------------------------
-            // MIDDLE CONTROLS AREA (Columns 1-7 with enlarged 290px frame height)
+            // MIDDLE CONTROLS AREA (Studio Modular Rack Modules)
             // -------------------------------------------------------------
             HStack::new(cx, |cx| {
-                // Column 1: MIX and PREDELAY (Orange)
+                // Column 1: MIX and PREDELAY (Aura Cyan)
                 VStack::new(cx, |cx| {
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.mix,
                         "MIX",
-                        vg::Color::rgb(243, 111, 33),
+                        vg::Color::rgb(56, 189, 248),
                         20.0,
                     );
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.predelay,
                         "PREDELAY",
-                        vg::Color::rgb(243, 111, 33),
+                        vg::Color::rgb(56, 189, 248),
                         20.0,
                     );
                 })
@@ -604,7 +671,7 @@ pub fn create(
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                // Column 2: DECAY (Big Concentric Ring Dial)
+                // Column 2: DECAY (Aura Orbital Dial)
                 ParamWidgetBase::build_view(
                     GuiData::params,
                     |p| &p.decay,
@@ -615,13 +682,13 @@ pub fn create(
                                     assets::NOTO_SANS,
                                 ))])
                                 .font_weight(FontWeightKeyword::Bold)
-                                .font_size(15.0)
-                                .color(Color::rgb(240, 240, 240))
+                                .font_size(14.5)
+                                .color(COLOR_AURA_GOLD)
                                 .height(Pixels(20.0))
                                 .child_top(Stretch(1.0))
                                 .child_bottom(Stretch(1.0));
 
-                            DecayDialDisc::new(cx, GuiData::params, |p| &p.decay)
+                            AuraDecayDialDisc::new(cx, GuiData::params, |p| &p.decay)
                                 .width(Pixels(124.0))
                                 .height(Pixels(124.0))
                                 .child_left(Stretch(1.0))
@@ -639,7 +706,7 @@ pub fn create(
                                 ))])
                                 .font_size(14.0)
                                 .font_weight(FontWeightKeyword::Bold)
-                                .color(Color::rgb(240, 240, 240))
+                                .color(COLOR_TEXT_WHITE)
                                 .height(Pixels(20.0))
                                 .child_top(Stretch(1.0))
                                 .child_bottom(Stretch(1.0));
@@ -654,13 +721,13 @@ pub fn create(
                     },
                 )(cx);
 
-                // Column 3: DAMPING Panel (Amber Border, 4 Knobs)
+                // Column 3: DAMPING Module (Amber Gold)
                 VStack::new(cx, |cx| {
                     Label::new(cx, "DAMPING")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(13.0)
-                        .color(COLOR_DAMPING_AMBER)
+                        .font_size(12.5)
+                        .color(COLOR_ACCENT_DAMP)
                         .top(Pixels(12.0))
                         .height(Pixels(20.0))
                         .child_left(Stretch(1.0))
@@ -668,12 +735,12 @@ pub fn create(
 
                     HStack::new(cx, |cx| {
                         VStack::new(cx, |cx| {
-                            build_vintage_knob(
+                            build_studio_knob(
                                 cx,
                                 GuiData::params,
                                 |p| &p.damping_high_freq,
                                 "HighFreq",
-                                vg::Color::rgb(248, 190, 82),
+                                vg::Color::rgb(245, 158, 11),
                                 17.5,
                             );
                         })
@@ -682,12 +749,12 @@ pub fn create(
                         .child_right(Stretch(1.0));
 
                         VStack::new(cx, |cx| {
-                            build_vintage_knob(
+                            build_studio_knob(
                                 cx,
                                 GuiData::params,
                                 |p| &p.damping_high_shelf,
                                 "HighShelf",
-                                vg::Color::rgb(248, 190, 82),
+                                vg::Color::rgb(245, 158, 11),
                                 17.5,
                             );
                         })
@@ -701,12 +768,12 @@ pub fn create(
 
                     HStack::new(cx, |cx| {
                         VStack::new(cx, |cx| {
-                            build_vintage_knob(
+                            build_studio_knob(
                                 cx,
                                 GuiData::params,
                                 |p| &p.damping_bass_freq,
                                 "BassFreq",
-                                vg::Color::rgb(248, 190, 82),
+                                vg::Color::rgb(245, 158, 11),
                                 17.5,
                             );
                         })
@@ -715,12 +782,12 @@ pub fn create(
                         .child_right(Stretch(1.0));
 
                         VStack::new(cx, |cx| {
-                            build_vintage_knob(
+                            build_studio_knob(
                                 cx,
                                 GuiData::params,
                                 |p| &p.damping_bass_mult,
                                 "BassMult",
-                                vg::Color::rgb(248, 190, 82),
+                                vg::Color::rgb(245, 158, 11),
                                 17.5,
                             );
                         })
@@ -734,9 +801,9 @@ pub fn create(
                 })
                 .width(Pixels(204.0))
                 .height(Pixels(290.0))
-                .border_color(COLOR_DAMPING_AMBER)
-                .border_width(Pixels(1.5))
-                .border_radius(Pixels(16.0))
+                .border_color(COLOR_PANEL_BORDER)
+                .border_width(Pixels(1.0))
+                .border_radius(Pixels(8.0))
                 .background_color(COLOR_PANEL_BG)
                 .row_between(Pixels(22.0))
                 .bottom(Pixels(12.0))
@@ -745,40 +812,40 @@ pub fn create(
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                // Column 4: SHAPE Panel (Orange Border: Size, Attack)
+                // Column 4: SHAPE Module (Solar Orange)
                 VStack::new(cx, |cx| {
                     Label::new(cx, "SHAPE")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(13.0)
-                        .color(COLOR_SHAPE_ORANGE)
+                        .font_size(12.5)
+                        .color(COLOR_ACCENT_SHAPE)
                         .top(Pixels(12.0))
                         .height(Pixels(20.0))
                         .child_left(Stretch(1.0))
                         .child_right(Stretch(1.0));
 
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.size,
                         "Size",
-                        vg::Color::rgb(245, 130, 41),
+                        vg::Color::rgb(249, 115, 22),
                         18.0,
                     );
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.attack,
                         "Attack",
-                        vg::Color::rgb(245, 130, 41),
+                        vg::Color::rgb(249, 115, 22),
                         18.0,
                     );
                 })
                 .width(Pixels(96.0))
                 .height(Pixels(290.0))
-                .border_color(COLOR_SHAPE_ORANGE)
-                .border_width(Pixels(1.5))
-                .border_radius(Pixels(20.0))
+                .border_color(COLOR_PANEL_BORDER)
+                .border_width(Pixels(1.0))
+                .border_radius(Pixels(8.0))
                 .background_color(COLOR_PANEL_BG)
                 .row_between(Pixels(26.0))
                 .bottom(Pixels(12.0))
@@ -787,40 +854,40 @@ pub fn create(
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                // Column 5: DIFF Panel (Red-Orange Border: Early, Late)
+                // Column 5: DIFFUSION Module (Emerald Mint)
                 VStack::new(cx, |cx| {
                     Label::new(cx, "DIFF")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(13.0)
-                        .color(COLOR_DIFF_REDORANGE)
+                        .font_size(12.5)
+                        .color(COLOR_ACCENT_DIFF)
                         .top(Pixels(12.0))
                         .height(Pixels(20.0))
                         .child_left(Stretch(1.0))
                         .child_right(Stretch(1.0));
 
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.diff_early,
                         "Early",
-                        vg::Color::rgb(232, 86, 39),
+                        vg::Color::rgb(16, 185, 129),
                         18.0,
                     );
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.diff_late,
                         "Late",
-                        vg::Color::rgb(232, 86, 39),
+                        vg::Color::rgb(16, 185, 129),
                         18.0,
                     );
                 })
                 .width(Pixels(96.0))
                 .height(Pixels(290.0))
-                .border_color(COLOR_DIFF_REDORANGE)
-                .border_width(Pixels(1.5))
-                .border_radius(Pixels(20.0))
+                .border_color(COLOR_PANEL_BORDER)
+                .border_width(Pixels(1.0))
+                .border_radius(Pixels(8.0))
                 .background_color(COLOR_PANEL_BG)
                 .row_between(Pixels(26.0))
                 .bottom(Pixels(12.0))
@@ -829,40 +896,40 @@ pub fn create(
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                // Column 6: MOD Panel (Crimson Border: Rate, Depth)
+                // Column 6: MODULATION Module (Cosmic Violet)
                 VStack::new(cx, |cx| {
                     Label::new(cx, "MOD")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(13.0)
-                        .color(COLOR_MOD_CRIMSON)
+                        .font_size(12.5)
+                        .color(COLOR_ACCENT_MOD)
                         .top(Pixels(12.0))
                         .height(Pixels(20.0))
                         .child_left(Stretch(1.0))
                         .child_right(Stretch(1.0));
 
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.mod_rate,
                         "Rate",
-                        vg::Color::rgb(200, 43, 58),
+                        vg::Color::rgb(168, 85, 247),
                         18.0,
                     );
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.mod_depth,
                         "Depth",
-                        vg::Color::rgb(200, 43, 58),
+                        vg::Color::rgb(168, 85, 247),
                         18.0,
                     );
                 })
                 .width(Pixels(96.0))
                 .height(Pixels(290.0))
-                .border_color(COLOR_MOD_CRIMSON)
-                .border_width(Pixels(1.5))
-                .border_radius(Pixels(20.0))
+                .border_color(COLOR_PANEL_BORDER)
+                .border_width(Pixels(1.0))
+                .border_radius(Pixels(8.0))
                 .background_color(COLOR_PANEL_BG)
                 .row_between(Pixels(26.0))
                 .bottom(Pixels(12.0))
@@ -871,40 +938,40 @@ pub fn create(
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                // Column 7: EQ Panel (Dark Red Border: HighCut, LowCut)
+                // Column 7: OUTPUT EQ Module (Studio Coral)
                 VStack::new(cx, |cx| {
                     Label::new(cx, "EQ")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
-                        .font_size(13.0)
-                        .color(COLOR_EQ_DARKRED)
+                        .font_size(12.5)
+                        .color(COLOR_ACCENT_EQ)
                         .top(Pixels(12.0))
                         .height(Pixels(20.0))
                         .child_left(Stretch(1.0))
                         .child_right(Stretch(1.0));
 
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.eq_high_cut,
                         "HighCut",
-                        vg::Color::rgb(138, 30, 40),
+                        vg::Color::rgb(244, 63, 94),
                         18.0,
                     );
-                    build_vintage_knob(
+                    build_studio_knob(
                         cx,
                         GuiData::params,
                         |p| &p.eq_low_cut,
                         "LowCut",
-                        vg::Color::rgb(138, 30, 40),
+                        vg::Color::rgb(244, 63, 94),
                         18.0,
                     );
                 })
                 .width(Pixels(96.0))
                 .height(Pixels(290.0))
-                .border_color(COLOR_EQ_DARKRED)
-                .border_width(Pixels(1.5))
-                .border_radius(Pixels(20.0))
+                .border_color(COLOR_PANEL_BORDER)
+                .border_width(Pixels(1.0))
+                .border_radius(Pixels(8.0))
                 .background_color(COLOR_PANEL_BG)
                 .row_between(Pixels(26.0))
                 .bottom(Pixels(12.0))
@@ -921,7 +988,7 @@ pub fn create(
             .child_bottom(Stretch(1.0));
 
             // -------------------------------------------------------------
-            // BOTTOM BAR: MODE, COLOR, PRESETS (with Load/Save)
+            // BOTTOM BAR: MODE, COLOR, PRESETS (Studio Rack Master Bar)
             // -------------------------------------------------------------
             HStack::new(cx, |cx| {
                 // Interactive Mode Selector
@@ -938,7 +1005,7 @@ pub fn create(
                     4,
                     "MODE:",
                     mode_lens,
-                    COLOR_MIX_ORANGE,
+                    COLOR_AURA_CYAN,
                 );
 
                 // Interactive Color Mode Selector
@@ -954,7 +1021,7 @@ pub fn create(
                     3,
                     "COLOR:",
                     color_lens,
-                    COLOR_MIX_ORANGE,
+                    COLOR_AURA_GOLD,
                 );
 
                 // Presets controls area
@@ -963,7 +1030,7 @@ pub fn create(
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
                         .font_size(13.0)
-                        .color(Color::rgb(220, 220, 220));
+                        .color(COLOR_TEXT_MUTED);
 
                     // Previous Button: ◀
                     Button::new(
@@ -975,13 +1042,13 @@ pub fn create(
                                     assets::NOTO_SANS,
                                 ))])
                                 .font_size(11.0)
-                                .color(COLOR_MIX_ORANGE)
+                                .color(COLOR_AURA_CYAN)
                         },
                     )
                     .width(Pixels(24.0))
                     .height(Pixels(24.0))
                     .background_color(COLOR_PANEL_BG)
-                    .border_color(COLOR_MIX_ORANGE)
+                    .border_color(COLOR_PANEL_BORDER)
                     .border_width(Pixels(1.0))
                     .border_radius(Pixels(4.0))
                     .child_top(Stretch(1.0))
@@ -1000,13 +1067,13 @@ pub fn create(
                                 ))])
                                 .font_weight(FontWeightKeyword::Bold)
                                 .font_size(12.0)
-                                .color(COLOR_VINTAGE)
+                                .color(COLOR_TEXT_WHITE)
                         },
                     )
                     .width(Pixels(110.0))
                     .height(Pixels(24.0))
                     .background_color(COLOR_PANEL_BG)
-                    .border_color(Color::rgb(80, 40, 30))
+                    .border_color(COLOR_PANEL_BORDER)
                     .border_width(Pixels(1.0))
                     .border_radius(Pixels(4.0))
                     .left(Pixels(2.0))
@@ -1026,13 +1093,13 @@ pub fn create(
                                     assets::NOTO_SANS,
                                 ))])
                                 .font_size(11.0)
-                                .color(COLOR_MIX_ORANGE)
+                                .color(COLOR_AURA_CYAN)
                         },
                     )
                     .width(Pixels(24.0))
                     .height(Pixels(24.0))
                     .background_color(COLOR_PANEL_BG)
-                    .border_color(COLOR_MIX_ORANGE)
+                    .border_color(COLOR_PANEL_BORDER)
                     .border_width(Pixels(1.0))
                     .border_radius(Pixels(4.0))
                     .child_top(Stretch(1.0))
@@ -1051,13 +1118,13 @@ pub fn create(
                                 ))])
                                 .font_weight(FontWeightKeyword::Bold)
                                 .font_size(10.5)
-                                .color(COLOR_VINTAGE)
+                                .color(COLOR_AURA_GOLD)
                         },
                     )
                     .width(Pixels(42.0))
                     .height(Pixels(24.0))
                     .background_color(COLOR_PANEL_BG)
-                    .border_color(COLOR_VINTAGE)
+                    .border_color(COLOR_AURA_GOLD)
                     .border_width(Pixels(1.0))
                     .border_radius(Pixels(4.0))
                     .left(Pixels(4.0))
@@ -1077,13 +1144,13 @@ pub fn create(
                                 ))])
                                 .font_weight(FontWeightKeyword::Bold)
                                 .font_size(10.5)
-                                .color(COLOR_MIX_ORANGE)
+                                .color(COLOR_AURA_CYAN)
                         },
                     )
                     .width(Pixels(42.0))
                     .height(Pixels(24.0))
                     .background_color(COLOR_PANEL_BG)
-                    .border_color(COLOR_MIX_ORANGE)
+                    .border_color(COLOR_AURA_CYAN)
                     .border_width(Pixels(1.0))
                     .border_radius(Pixels(4.0))
                     .left(Pixels(2.0))
