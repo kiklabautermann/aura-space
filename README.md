@@ -4,6 +4,10 @@
 
 Featuring a modulated **Jon Dattorro (MVerb) Figure-of-Eight** tank topology with vintage converter color modeling (1970s, 1980s, and Modern NOW modes), AuraSpace combines lush vintage spatial diffusion with modern stereo SIMD optimization and a dedicated studio rack vector interface.
 
+<p align="center">
+  <img src="aura-space.png" alt="AuraSpace Studio Reverb GUI" width="100%">
+</p>
+
 ---
 
 ## Highlights & Features
