@@ -33,7 +33,7 @@ impl Default for AuraSpace {
 impl Plugin for AuraSpace {
     const NAME: &'static str = "AuraSpace";
     const VENDOR: &'static str = "Aura Bridge";
-    const URL: &'static str = "https://github.com/kiklabautermann/aura-verb";
+    const URL: &'static str = "https://github.com/kiklabautermann/aura-space";
     const EMAIL: &'static str = "info@aurabridge.org";
     const VERSION: &'static str = "0.1.0";
 

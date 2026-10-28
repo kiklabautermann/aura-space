@@ -85,7 +85,7 @@ AuraSpace models the converter architectures and bandwidth limitations of distin
 
 ### Precompiled Binary (Recommended)
 
-Download `aura-space.clap` from the [Releases](https://github.com/kiklabautermann/aura-verb/releases) page and copy it into your user CLAP directory:
+Download `aura-space.clap` from the [Releases](https://github.com/kiklabautermann/aura-space/releases) page and copy it into your user CLAP directory:
 
 ```bash
 mkdir -p ~/.clap
@@ -114,7 +114,7 @@ Launch your CLAP-compatible DAW (e.g., Bitwig Studio, REAPER) and rescan plugins
 Clone the repository and build the release binary:
 
 ```bash
-git clone https://github.com/kiklabautermann/aura-verb.git aura-space
+git clone https://github.com/kiklabautermann/aura-space.git aura-space
 cd aura-space
 
 # Run release build and automatic deployment
