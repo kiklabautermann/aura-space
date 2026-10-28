@@ -149,6 +149,23 @@ A comprehensive test suite verifies:
 
 ---
 
+## Credits & References
+
+- **Jon Dattorro**: Reverb tank topology based on the seminal paper:
+  *Jon Dattorro, "Effect Design, Part 1: Reverberator and Other Filters", Journal of the Audio Engineering Society (JAES), Vol. 45, No. 9, September 1997.*
+- **CLAP Standard**: Developed by the [CLAP team](https://cleveraudio.org/) (Free-*, Alexandre Bique, Urs Heckmann, et al.) under the MIT license.
+- **NIH-plug Framework**: Created by [Robbert van der Helm](https://github.com/robbert-vdh/nih-plug) under the ISC license.
+- **Vizia GUI Library**: Developed by [Georgero, Colin Finck, and contributors](https://github.com/vizia/vizia) under the MIT license.
+- **Martin Eastwood (MVerb)**: For popularizing the open-source Dattorro figure-of-eight implementation in modern audio plugin development.
+
+---
+
+## Disclaimer & Trademarks
+
+All product names, logos, brands, and registered trademarks mentioned in this repository (including "ValhallaVintageVerb" and "Valhalla DSP") are property of their respective owners (Valhalla DSP, LLC). Their mention is solely for descriptive and comparative purposes to explain algorithmic design and parameter behaviors. **AuraVerb** is an independent, original open-source project and is **not affiliated with, associated with, authorized by, sponsored by, or endorsed by Valhalla DSP, LLC**.
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
