@@ -1,8 +1,8 @@
-# AuraVerb
+# AuraSpace
 
-**AuraVerb** is a high-performance, vintage algorithmic reverb audio plugin for Linux, written in 100% safe, modern Rust using the **CLAP** (CLever Audio Plugin) standard and the **Vizia** GUI framework.
+**AuraSpace** is a high-performance, vintage algorithmic reverb audio plugin for Linux, written in 100% safe, modern Rust using the **CLAP** (CLever Audio Plugin) standard and the **Vizia** GUI framework.
 
-Inspired by iconic studio algorithmic reverbs such as Valhalla VintageVerb and classic digital hardware, AuraVerb features a modulated **Jon Dattorro (MVerb) Figure-of-Eight** tank topology with vintage converter color modeling (1970s, 1980s, and Modern NOW modes).
+Featuring a modulated **Jon Dattorro (MVerb) Figure-of-Eight** tank topology with vintage converter color modeling (1970s, 1980s, and Modern NOW modes), AuraSpace combines lush vintage spatial diffusion with modern stereo SIMD optimization and a dedicated studio rack vector interface.
 
 ---
 
@@ -24,20 +24,21 @@ Inspired by iconic studio algorithmic reverbs such as Valhalla VintageVerb and c
   - **Stereo In $\rightarrow$ Stereo Out**: Standard stereo tracking and bus processing.
   - **Mono In $\rightarrow$ Stereo Out**: Classic send-reverb workflow (blooms mono vocals, leads, and drums into a lush, wide stereo soundstage).
   - **Mono In $\rightarrow$ Mono Out**: Pure mono tracks with phase-aligned stereo-tap summing.
-- **Vector-Inspired Vizia UI**:
-  - Flat, retro-styled aesthetic with high-contrast color-coded sections.
-  - Iconic 4-ring concentric rainbow Decay dial.
+- **Original 'Aura Studio' Vector UI**:
+  - Sleek brushed obsidian / dark graphite modular rack chassis.
+  - Custom **Aura Orbital Decay Dial** with radiant solar gold arc and cyan precision needle.
+  - Color-coded frequency and modulation rack modules.
   - Interactive clickable mode toggles and preset browser.
 - **Built-in Preset System**:
   - 8 curated factory presets.
   - Save and load `.json` preset files via native system file dialogs (`rfd`).
-  - Automatic directory synchronization in `~/.config/aura_verb/presets/`.
+  - Automatic directory synchronization in `~/.config/aura_space/presets/`.
 
 ---
 
 ## The Three Color Modes
 
-AuraVerb models the converter architectures and bandwidth limitations of distinct audio production eras:
+AuraSpace models the converter architectures and bandwidth limitations of distinct audio production eras:
 
 | Color Mode | Bandwidth | Resolution & Dither | Saturation & Character |
 | :--- | :--- | :--- | :--- |
@@ -62,7 +63,7 @@ AuraVerb models the converter architectures and bandwidth limitations of distinc
 | :--- | :--- | :--- | :--- |
 | **Main** | **Mix** | 0.0 % – 100.0 % | Dry / Wet balance |
 | | **PreDelay** | 0.0 ms – 500.0 ms | Initial delay time before reverb onset |
-| | **Decay** | 0.2 s – 70.0 s | $T_{60}$ reverberation decay time (4-ring dial) |
+| | **Decay** | 0.2 s – 70.0 s | $T_{60}$ reverberation decay time (Orbital dial) |
 | **Damping** | **HighFreq** | 1000 Hz – 20000 Hz | High-frequency damping cutoff |
 | | **HighShelf** | -24.0 dB – 0.0 dB | High-shelf attenuation in feedback loop |
 | | **BassFreq** | 10 Hz – 1000 Hz | Low-frequency crossover point |
@@ -84,11 +85,11 @@ AuraVerb models the converter architectures and bandwidth limitations of distinc
 
 ### Precompiled Binary (Recommended)
 
-Download `aura-verb.clap` from the [Releases](https://github.com/kiklabautermann/aura-verb/releases) page and copy it into your user CLAP directory:
+Download `aura-space.clap` from the [Releases](https://github.com/kiklabautermann/aura-verb/releases) page and copy it into your user CLAP directory:
 
 ```bash
 mkdir -p ~/.clap
-cp aura-verb.clap ~/.clap/
+cp aura-space.clap ~/.clap/
 ```
 
 Launch your CLAP-compatible DAW (e.g., Bitwig Studio, REAPER) and rescan plugins.
@@ -113,8 +114,8 @@ Launch your CLAP-compatible DAW (e.g., Bitwig Studio, REAPER) and rescan plugins
 Clone the repository and build the release binary:
 
 ```bash
-git clone https://github.com/kiklabautermann/aura-verb.git
-cd aura-verb
+git clone https://github.com/kiklabautermann/aura-verb.git aura-space
+cd aura-space
 
 # Run release build and automatic deployment
 ./deploy.sh
@@ -127,10 +128,10 @@ cargo build --release
 ```
 
 The compiled shared library will be located at:
-`target/release/libaura_verb.so`
+`target/release/libaura_space.so`
 
 Copy and rename to:
-`~/.clap/aura_verb.clap`
+`~/.clap/aura_space.clap`
 
 ### Running Tests
 
@@ -162,7 +163,7 @@ A comprehensive test suite verifies:
 
 ## Disclaimer & Trademarks
 
-All product names, logos, brands, and registered trademarks mentioned in this repository (including "ValhallaVintageVerb" and "Valhalla DSP") are property of their respective owners (Valhalla DSP, LLC). Their mention is solely for descriptive and comparative purposes to explain algorithmic design and parameter behaviors. **AuraVerb** is an independent, original open-source project and is **not affiliated with, associated with, authorized by, sponsored by, or endorsed by Valhalla DSP, LLC**.
+All product names, logos, brands, and registered trademarks mentioned in this repository are property of their respective owners. Their mention is solely for descriptive and comparative purposes to explain algorithmic design and parameter behaviors. **AuraSpace** is an independent, original open-source project.
 
 ---
 

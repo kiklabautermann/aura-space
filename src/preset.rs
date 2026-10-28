@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 use nih_plug::prelude::*;
 
 use crate::dsp::{ColorMode, ReverbMode};
-use crate::params::AuraVerbParams;
+use crate::params::AuraSpaceParams;
 
 /// Serializable snapshot of all AuraVerb parameters.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct AuraVerbPreset {
+pub struct AuraSpacePreset {
     pub name: String,
     pub mix: f32,
     pub predelay: f32,
@@ -31,15 +31,15 @@ pub struct AuraVerbPreset {
     pub color_mode: usize,
 }
 
-impl Default for AuraVerbPreset {
+impl Default for AuraSpacePreset {
     fn default() -> Self {
         Self::factory_presets()[0].clone()
     }
 }
 
-impl AuraVerbPreset {
+impl AuraSpacePreset {
     /// Capture current parameter values into a preset.
-    pub fn from_params(name: &str, p: &AuraVerbParams) -> Self {
+    pub fn from_params(name: &str, p: &AuraSpaceParams) -> Self {
         let rev_mode = match p.reverb_mode.value() {
             ReverbMode::ConcertHall => 0,
             ReverbMode::BrightHall => 1,
@@ -75,7 +75,7 @@ impl AuraVerbPreset {
     }
 
     /// Apply preset values to plugin parameters via an emit closure.
-    pub fn apply_to_params(&self, p: &AuraVerbParams, mut emit_normalized: impl FnMut(ParamPtr, f32)) {
+    pub fn apply_to_params(&self, p: &AuraSpaceParams, mut emit_normalized: impl FnMut(ParamPtr, f32)) {
         let mut set = |param: &FloatParam, plain: f32| {
             let norm = param.preview_normalized(plain);
             emit_normalized(param.as_ptr(), norm);
@@ -156,11 +156,11 @@ impl AuraVerbPreset {
         self.color_mode = self.color_mode.min(2);
     }
 
-    /// Default user preset directory: ~/.config/aura_verb/presets/
+    /// Default user preset directory: ~/.config/aura_space/presets/
     pub fn preset_dir() -> PathBuf {
         let dir = dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("aura_verb")
+            .join("aura_space")
             .join("presets");
         if !dir.exists() {
             let _ = std::fs::create_dir_all(&dir);
@@ -169,10 +169,10 @@ impl AuraVerbPreset {
     }
 
     /// Built-in Factory Presets (cached via LazyLock, allocated only once)
-    pub fn factory_presets() -> &'static [AuraVerbPreset] {
-        static FACTORY: LazyLock<Vec<AuraVerbPreset>> = LazyLock::new(|| {
+    pub fn factory_presets() -> &'static [AuraSpacePreset] {
+        static FACTORY: LazyLock<Vec<AuraSpacePreset>> = LazyLock::new(|| {
             vec![
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Concert Hall".to_string(),
                     mix: 100.0,
                     predelay: 20.0,
@@ -192,7 +192,7 @@ impl AuraVerbPreset {
                     reverb_mode: 0, // Concert Hall
                     color_mode: 0,  // 1970s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Vintage Plate".to_string(),
                     mix: 100.0,
                     predelay: 0.0,
@@ -212,7 +212,7 @@ impl AuraVerbPreset {
                     reverb_mode: 2, // Plate
                     color_mode: 1,  // 1980s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Warm Room".to_string(),
                     mix: 100.0,
                     predelay: 8.0,
@@ -232,7 +232,7 @@ impl AuraVerbPreset {
                     reverb_mode: 3, // Room
                     color_mode: 0,  // 1970s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Cathedral Cavern".to_string(),
                     mix: 100.0,
                     predelay: 45.0,
@@ -252,7 +252,7 @@ impl AuraVerbPreset {
                     reverb_mode: 0, // Concert Hall
                     color_mode: 1,  // 1980s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "1970s Dark Space".to_string(),
                     mix: 100.0,
                     predelay: 35.0,
@@ -272,7 +272,7 @@ impl AuraVerbPreset {
                     reverb_mode: 0, // Concert Hall
                     color_mode: 0,  // 1970s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "80s Vocal Hall".to_string(),
                     mix: 100.0,
                     predelay: 24.0,
@@ -292,7 +292,7 @@ impl AuraVerbPreset {
                     reverb_mode: 1, // Bright Hall
                     color_mode: 1,  // 1980s
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Clean Modern Studio".to_string(),
                     mix: 100.0,
                     predelay: 12.0,
@@ -312,7 +312,7 @@ impl AuraVerbPreset {
                     reverb_mode: 1, // Bright Hall
                     color_mode: 2,  // Now
                 },
-                AuraVerbPreset {
+                AuraSpacePreset {
                     name: "Ambient Cloud".to_string(),
                     mix: 100.0,
                     predelay: 50.0,
@@ -350,7 +350,7 @@ impl AuraVerbPreset {
     }
 
     /// List all presets found in preset_dir(), plus factory presets as fallback.
-    pub fn list_all_presets() -> Vec<AuraVerbPreset> {
+    pub fn list_all_presets() -> Vec<AuraSpacePreset> {
         Self::ensure_factory_presets();
         let dir = Self::preset_dir();
         let mut list = Vec::new();

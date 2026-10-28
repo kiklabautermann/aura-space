@@ -7,16 +7,17 @@ mkdir -p "$TARGET_DIR"
 
 cd "$SCRIPT_DIR"
 
-echo "Building AuraVerb (Rust Vintage Verb)..."
+echo "Building AuraSpace (Vintage Reverb)..."
 cargo build --release
 
-echo "Deploying to $TARGET_DIR/aura_verb.clap..."
-cp target/release/libaura_verb.so "$TARGET_DIR/aura_verb.clap"
+echo "Deploying to $TARGET_DIR/aura_space.clap..."
+cp target/release/libaura_space.so "$TARGET_DIR/aura_space.clap"
+cp target/release/libaura_space.so "$TARGET_DIR/aura_verb.clap" 2>/dev/null || true
 
 echo "Bundling with xtask..."
-cargo xtask bundle aura-verb --release || true
-if [ -d target/bundled/aura-verb.clap ]; then
-    cp -r target/bundled/aura-verb.clap "$TARGET_DIR/" || true
+cargo xtask bundle aura-space --release || true
+if [ -d target/bundled/aura-space.clap ]; then
+    cp -r target/bundled/aura-space.clap "$TARGET_DIR/" || true
 fi
 
-echo "Done! AuraVerb successfully deployed to $TARGET_DIR/"
+echo "Done! AuraSpace successfully deployed to $TARGET_DIR/"

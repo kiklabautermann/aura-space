@@ -7,7 +7,7 @@ use std::ffi::CStr;
 fn test_clap_library_entry() {
     // Path to the compiled release library
     let lib_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("target/release/libaura_verb.so");
+        .join("target/release/libaura_space.so");
 
     if !lib_path.exists() {
         eprintln!("Release library not built yet, skipping dynamic load test.");
@@ -54,8 +54,8 @@ fn test_clap_library_entry() {
         println!("  Name:   {}", name);
         println!("  Vendor: {}", vendor);
 
-        assert_eq!(id, "com.aura.vintageverb");
-        assert_eq!(name, "AuraVintageVerb");
+        assert_eq!(id, "com.aura.auraspace");
+        assert_eq!(name, "AuraSpace");
         assert_eq!(vendor, "Aura Bridge");
     }
 }

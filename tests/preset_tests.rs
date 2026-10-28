@@ -1,12 +1,12 @@
 //! Unit tests for AuraVerb Preset System (serialization, apply, file I/O).
 
 use std::sync::Arc;
-use aura_verb::params::AuraVerbParams;
-use aura_verb::preset::AuraVerbPreset;
+use aura_space::params::AuraSpaceParams;
+use aura_space::preset::AuraSpacePreset;
 
 #[test]
 fn test_percentage_parameter_formatting() {
-    let params = AuraVerbParams::default();
+    let params = AuraSpaceParams::default();
 
     // Verify mix (default 100.0) displays "100.0 %", NOT "10000.0 %"
     let mix_str = params.mix.to_string();
@@ -31,18 +31,18 @@ fn test_percentage_parameter_formatting() {
 
 #[test]
 fn test_ensure_factory_presets() {
-    AuraVerbPreset::ensure_factory_presets();
-    let dir = AuraVerbPreset::preset_dir();
+    AuraSpacePreset::ensure_factory_presets();
+    let dir = AuraSpacePreset::preset_dir();
     assert!(dir.exists(), "Preset directory should exist");
 
-    let list = AuraVerbPreset::list_all_presets();
+    let list = AuraSpacePreset::list_all_presets();
     assert!(list.len() >= 8, "Expected at least 8 presets in directory");
 }
 
 #[test]
 fn test_preset_from_params_and_serialization() {
-    let params = Arc::new(AuraVerbParams::default());
-    let preset = AuraVerbPreset::from_params("My Test Preset", &params);
+    let params = Arc::new(AuraSpaceParams::default());
+    let preset = AuraSpacePreset::from_params("My Test Preset", &params);
 
     assert_eq!(preset.name, "My Test Preset");
     assert_eq!(preset.mix, 100.0);
@@ -50,15 +50,15 @@ fn test_preset_from_params_and_serialization() {
     assert_eq!(preset.decay, 4.0);
 
     let json = serde_json::to_string_pretty(&preset).expect("Serialization failed");
-    let loaded: AuraVerbPreset = serde_json::from_str(&json).expect("Deserialization failed");
+    let loaded: AuraSpacePreset = serde_json::from_str(&json).expect("Deserialization failed");
 
     assert_eq!(preset, loaded);
 }
 
 #[test]
 fn test_preset_apply_to_params() {
-    let params = Arc::new(AuraVerbParams::default());
-    let presets = AuraVerbPreset::factory_presets();
+    let params = Arc::new(AuraSpaceParams::default());
+    let presets = AuraSpacePreset::factory_presets();
     let cathedral = presets
         .iter()
         .find(|p| p.name == "Cathedral Cavern")
@@ -82,7 +82,7 @@ fn test_preset_file_io() {
     let temp_dir = std::env::temp_dir();
     let file_path = temp_dir.join("aura_verb_test_preset.json");
 
-    let original = AuraVerbPreset {
+    let original = AuraSpacePreset {
         name: "File IO Test".to_string(),
         mix: 85.0,
         predelay: 15.0,
@@ -106,7 +106,7 @@ fn test_preset_file_io() {
     original.save_to_file(&file_path).expect("Failed to save preset to file");
     assert!(file_path.exists());
 
-    let loaded = AuraVerbPreset::load_from_file(&file_path).expect("Failed to load preset from file");
+    let loaded = AuraSpacePreset::load_from_file(&file_path).expect("Failed to load preset from file");
     assert_eq!(original, loaded);
 
     let _ = std::fs::remove_file(file_path);

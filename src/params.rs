@@ -7,7 +7,7 @@ use nih_plug_vizia::ViziaState;
 use crate::dsp::{ColorMode, ReverbMode};
 
 #[derive(Params)]
-pub struct AuraVerbParams {
+pub struct AuraSpaceParams {
     #[persist = "editor-state"]
     pub editor_state: Arc<ViziaState>,
 
@@ -71,7 +71,7 @@ pub struct AuraVerbParams {
     pub color_mode: EnumParam<ColorMode>,
 }
 
-impl Default for AuraVerbParams {
+impl Default for AuraSpaceParams {
     fn default() -> Self {
         Self {
             editor_state: ViziaState::new(|| (1020, 410)),

@@ -19,8 +19,8 @@ use nih_plug_vizia::widgets::{RawParamEvent, ResizeHandle};
 use nih_plug_vizia::{assets, create_vizia_editor, ViziaState, ViziaTheming};
 
 use crate::dsp::{ColorMode, ReverbMode};
-use crate::params::AuraVerbParams;
-use crate::preset::AuraVerbPreset;
+use crate::params::AuraSpaceParams;
+use crate::preset::AuraSpacePreset;
 
 // =========================================================================
 // Aura Studio Color Palette (100% Original Brand Identity)
@@ -45,10 +45,10 @@ pub const COLOR_ACCENT_EQ: Color = Color::rgb(244, 63, 94);     // Studio Coral 
 
 #[derive(Lens)]
 pub struct GuiData {
-    pub params: Arc<AuraVerbParams>,
+    pub params: Arc<AuraSpaceParams>,
     pub current_preset_name: String,
     pub preset_index: usize,
-    pub presets: Vec<AuraVerbPreset>,
+    pub presets: Vec<AuraSpacePreset>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -97,22 +97,22 @@ impl Model for GuiData {
                 meta.consume();
             }
             AppEvent::SavePreset => {
-                let dir = AuraVerbPreset::preset_dir();
+                let dir = AuraSpacePreset::preset_dir();
                 let safe_name = self.current_preset_name.replace(['/', '\\', ' '], "_");
                 if let Some(path) = rfd::FileDialog::new()
                     .set_directory(&dir)
                     .set_file_name(&format!("{}.json", safe_name))
-                    .add_filter("AuraVerb Preset (*.json)", &["json"])
+                    .add_filter("AuraSpace Preset (*.json)", &["json"])
                     .save_file()
                 {
                     let name = path
                         .file_stem()
                         .and_then(|s| s.to_str())
                         .unwrap_or("Custom Preset");
-                    let new_preset = AuraVerbPreset::from_params(name, &self.params);
+                    let new_preset = AuraSpacePreset::from_params(name, &self.params);
                     if let Ok(()) = new_preset.save_to_file(&path) {
                         self.current_preset_name = name.to_string();
-                        self.presets = AuraVerbPreset::list_all_presets();
+                        self.presets = AuraSpacePreset::list_all_presets();
                         if let Some(idx) = self.presets.iter().position(|p| p.name == name) {
                             self.preset_index = idx;
                         }
@@ -121,13 +121,13 @@ impl Model for GuiData {
                 meta.consume();
             }
             AppEvent::LoadPreset => {
-                let dir = AuraVerbPreset::preset_dir();
+                let dir = AuraSpacePreset::preset_dir();
                 if let Some(path) = rfd::FileDialog::new()
                     .set_directory(&dir)
-                    .add_filter("AuraVerb Preset (*.json)", &["json"])
+                    .add_filter("AuraSpace Preset (*.json)", &["json"])
                     .pick_file()
                 {
-                    if let Ok(preset) = AuraVerbPreset::load_from_file(&path) {
+                    if let Ok(preset) = AuraSpacePreset::load_from_file(&path) {
                         self.current_preset_name = preset.name.clone();
                         preset.apply_to_params(&self.params, |ptr, val| {
                             cx.emit(RawParamEvent::BeginSetParameter(ptr));
@@ -135,7 +135,7 @@ impl Model for GuiData {
                             cx.emit(RawParamEvent::EndSetParameter(ptr));
                         });
                         cx.emit(RawParamEvent::ParametersChanged);
-                        self.presets = AuraVerbPreset::list_all_presets();
+                        self.presets = AuraSpacePreset::list_all_presets();
                         if let Some(idx) = self.presets.iter().position(|p| p.name == preset.name) {
                             self.preset_index = idx;
                         }
@@ -575,7 +575,7 @@ impl View for EnumCycleButton {
 }
 
 pub fn create(
-    params: Arc<AuraVerbParams>,
+    params: Arc<AuraSpaceParams>,
     editor_state: Arc<ViziaState>,
 ) -> Option<Box<dyn Editor>> {
     create_vizia_editor(editor_state, ViziaTheming::Custom, move |cx, _| {
@@ -583,7 +583,7 @@ pub fn create(
         assets::register_noto_sans_regular(cx);
         assets::register_noto_sans_bold(cx);
 
-        let presets = AuraVerbPreset::list_all_presets();
+        let presets = AuraSpacePreset::list_all_presets();
         let current_preset_name = presets
             .first()
             .map(|p| p.name.clone())
@@ -609,7 +609,7 @@ pub fn create(
                         .font_weight(FontWeightKeyword::Bold)
                         .font_size(26.0)
                         .color(COLOR_AURA_CYAN);
-                    Label::new(cx, "VERB")
+                    Label::new(cx, "SPACE")
                         .font_family(vec![FamilyOwned::Name(String::from(assets::NOTO_SANS))])
                         .font_weight(FontWeightKeyword::Bold)
                         .font_size(26.0)

@@ -1,8 +1,8 @@
 //! Forensic robustness, stress and fuzzing tests for AuraVerb.
 
-use aura_verb::dsp::color::ColorMode;
-use aura_verb::dsp::mverb::{DattorroReverb, ReverbConfig, ReverbMode};
-use aura_verb::preset::AuraVerbPreset;
+use aura_space::dsp::color::ColorMode;
+use aura_space::dsp::mverb::{DattorroReverb, ReverbConfig, ReverbMode};
+use aura_space::preset::AuraSpacePreset;
 
 #[test]
 fn test_nan_and_infinity_resilience() {
@@ -99,7 +99,7 @@ fn test_extreme_sample_rates_safety() {
 
 #[test]
 fn test_corrupt_preset_sanitization() {
-    let mut corrupt_preset = AuraVerbPreset {
+    let mut corrupt_preset = AuraSpacePreset {
         name: "   ".to_string(), // Empty name
         mix: f32::NAN,
         predelay: -999.0,

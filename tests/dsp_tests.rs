@@ -1,9 +1,9 @@
 //! Automated DSP tests for AuraVerb / MVerb Dattorro engine.
 
-use aura_verb::dsp::color::{ChannelColorProcessor, ColorMode};
-use aura_verb::dsp::delay_line::{AllpassFilter, DelayLine};
-use aura_verb::dsp::filters::{BiquadFilter, OnePoleFilter};
-use aura_verb::dsp::mverb::{DattorroReverb, ReverbConfig, ReverbMode};
+use aura_space::dsp::color::{ChannelColorProcessor, ColorMode};
+use aura_space::dsp::delay_line::{AllpassFilter, DelayLine};
+use aura_space::dsp::filters::{BiquadFilter, OnePoleFilter};
+use aura_space::dsp::mverb::{DattorroReverb, ReverbConfig, ReverbMode};
 
 #[test]
 fn test_delay_line_fifo_and_interpolation() {

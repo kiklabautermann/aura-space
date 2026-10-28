@@ -1,4 +1,4 @@
-//! AuraVerb — CLAP Reverb Plugin with Vizia UI mimicking Valhalla VintageVerb.
+//! AuraSpace — Vintage Algorithmic Reverb CLAP Plugin in 100% Rust.
 
 pub mod dsp;
 pub mod editor;
@@ -8,20 +8,20 @@ pub mod preset;
 use std::sync::Arc;
 use nih_plug::prelude::*;
 use dsp::{DattorroReverb, ReverbConfig};
-use params::AuraVerbParams;
+use params::AuraSpaceParams;
 
-pub struct AuraVerb {
-    params: Arc<AuraVerbParams>,
+pub struct AuraSpace {
+    params: Arc<AuraSpaceParams>,
     reverb: DattorroReverb,
     sample_rate: f32,
     silent_frames_count: usize,
     tail_active: bool,
 }
 
-impl Default for AuraVerb {
+impl Default for AuraSpace {
     fn default() -> Self {
         Self {
-            params: Arc::new(AuraVerbParams::default()),
+            params: Arc::new(AuraSpaceParams::default()),
             reverb: DattorroReverb::new(),
             sample_rate: 44100.0,
             silent_frames_count: 0,
@@ -30,12 +30,12 @@ impl Default for AuraVerb {
     }
 }
 
-impl Plugin for AuraVerb {
-    const NAME: &'static str = "AuraVintageVerb";
+impl Plugin for AuraSpace {
+    const NAME: &'static str = "AuraSpace";
     const VENDOR: &'static str = "Aura Bridge";
-    const URL: &'static str = "https://github.com/aura";
+    const URL: &'static str = "https://github.com/kiklabautermann/aura-verb";
     const EMAIL: &'static str = "info@aurabridge.org";
-    const VERSION: &'static str = "1.0.0";
+    const VERSION: &'static str = "0.1.0";
 
     const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[
         // 1. Stereo In -> Stereo Out
@@ -96,6 +96,10 @@ impl Plugin for AuraVerb {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
+        if buffer.channels() == 0 || buffer.samples() == 0 {
+            return ProcessStatus::Normal;
+        }
+
         let p = &self.params;
         let num_samples = buffer.samples();
         let num_channels = buffer.channels();
@@ -104,7 +108,9 @@ impl Plugin for AuraVerb {
         let mut input_peak = 0.0f32;
         for channel in buffer.as_slice() {
             for &sample in channel.iter() {
-                input_peak = input_peak.max(sample.abs());
+                if sample.is_finite() {
+                    input_peak = input_peak.max(sample.abs());
+                }
             }
         }
 
@@ -153,34 +159,42 @@ impl Plugin for AuraVerb {
         if num_channels == 1 {
             // Mono In -> Mono Out
             for mut channel_samples in buffer.iter_samples() {
-                let in_mono = *channel_samples.get_mut(0).unwrap();
-                let (out_l, out_r) = self.reverb.process_sample_fast(in_mono, in_mono);
-                let out_mono = 0.5 * (out_l + out_r);
+                if let Some(ch0) = channel_samples.get_mut(0) {
+                    let in_mono = if ch0.is_finite() { ch0.clamp(-10.0, 10.0) } else { 0.0 };
+                    let (out_l, out_r) = self.reverb.process_sample_fast(in_mono, in_mono);
+                    let out_mono = 0.5 * (out_l + out_r);
 
-                output_peak = output_peak.max(out_mono.abs());
-                *channel_samples.get_mut(0).unwrap() = out_mono;
+                    let safe_out = if out_mono.is_finite() { out_mono.clamp(-10.0, 10.0) } else { 0.0 };
+                    output_peak = output_peak.max(safe_out.abs());
+                    *ch0 = safe_out;
+                }
             }
         } else {
             // Stereo Out (either Stereo In or Mono In)
             for mut channel_samples in buffer.iter_samples() {
-                let in_l = *channel_samples.get_mut(0).unwrap();
-                // If input has only 1 channel, duplicate mono to right channel
-                let in_r = channel_samples.get_mut(1).map(|v| *v).unwrap_or(in_l);
+                let in_l_raw = channel_samples.get_mut(0).map(|v| *v).unwrap_or(0.0);
+                let in_r_raw = channel_samples.get_mut(1).map(|v| *v).unwrap_or(in_l_raw);
+
+                let in_l = if in_l_raw.is_finite() { in_l_raw.clamp(-10.0, 10.0) } else { 0.0 };
+                let in_r = if in_r_raw.is_finite() { in_r_raw.clamp(-10.0, 10.0) } else { 0.0 };
 
                 let (out_l, out_r) = self.reverb.process_sample_fast(in_l, in_r);
 
-                output_peak = output_peak.max(out_l.abs().max(out_r.abs()));
+                let safe_l = if out_l.is_finite() { out_l.clamp(-10.0, 10.0) } else { 0.0 };
+                let safe_r = if out_r.is_finite() { out_r.clamp(-10.0, 10.0) } else { 0.0 };
 
-                *channel_samples.get_mut(0).unwrap() = out_l;
-                if let Some(r) = channel_samples.get_mut(1) {
-                    *r = out_r;
+                output_peak = output_peak.max(safe_l.abs().max(safe_r.abs()));
+
+                if let Some(ch0) = channel_samples.get_mut(0) {
+                    *ch0 = safe_l;
+                }
+                if let Some(ch1) = channel_samples.get_mut(1) {
+                    *ch1 = safe_r;
                 }
             }
         }
 
         // 4. Tail evaluation: if input is silent and reverb output has decayed below -100 dB
-        //    Use a dynamic threshold proportional to decay time (min 0.5s, max 10s) to avoid
-        //    cutting off long reverb tails prematurely.
         let silence_threshold_s = (p.decay.value() * 2.0).clamp(0.5, 10.0);
         let silence_threshold_samples = (self.sample_rate * silence_threshold_s) as usize;
         if is_input_silent && output_peak < 1e-5 && self.silent_frames_count > silence_threshold_samples {
@@ -198,10 +212,10 @@ impl Plugin for AuraVerb {
     }
 }
 
-impl ClapPlugin for AuraVerb {
-    const CLAP_ID: &'static str = "com.aura.vintageverb";
+impl ClapPlugin for AuraSpace {
+    const CLAP_ID: &'static str = "com.aura.auraspace";
     const CLAP_DESCRIPTION: Option<&'static str> =
-        Some("Valhalla VintageVerb emulation based on Jon Dattorro MVerb algorithm");
+        Some("AuraSpace — Vintage Algorithmic Reverb Plugin");
     const CLAP_MANUAL_URL: Option<&'static str> = None;
     const CLAP_SUPPORT_URL: Option<&'static str> = None;
     const CLAP_FEATURES: &'static [ClapFeature] = &[
@@ -212,4 +226,4 @@ impl ClapPlugin for AuraVerb {
     ];
 }
 
-nih_export_clap!(AuraVerb);
+nih_export_clap!(AuraSpace);
