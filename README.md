@@ -104,13 +104,22 @@ AuraSpace models the converter architectures and bandwidth limitations of distin
 
 ## Installation
 
-### Precompiled Binary (Recommended)
+### Linux
 
-Download `aura-space.clap` from the [Releases](https://github.com/kiklabautermann/aura-space/releases) page and copy it into your user CLAP directory:
+Download `aura-space.clap` (or `aura-space-linux-x86_64.zip`) from the [Releases](https://github.com/kiklabautermann/aura-space/releases) page and copy it into your user CLAP directory:
 
 ```bash
 mkdir -p ~/.clap
 cp aura-space.clap ~/.clap/
+```
+
+### macOS (Apple Silicon M1/M2/M3/M4 & Intel Universal)
+
+Download `aura-space-macos-universal.zip` from the [Releases](https://github.com/kiklabautermann/aura-space/releases) page, unzip it, and copy the `aura-space.clap` bundle into your macOS CLAP plugins folder:
+
+```bash
+mkdir -p ~/Library/Audio/Plug-Ins/CLAP
+cp -r aura-space.clap ~/Library/Audio/Plug-Ins/CLAP/
 ```
 
 Launch your CLAP-compatible DAW (e.g., Bitwig Studio, REAPER) and rescan plugins.

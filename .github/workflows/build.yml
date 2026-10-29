@@ -1,0 +1,124 @@
+name: Build & Release AuraSpace
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux CLAP
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxcb1-dev libxcb-icccm4-dev libgl1-mesa-dev zip
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Tests
+        run: cargo test
+
+      - name: Build Release
+        run: cargo build --release
+
+      - name: Bundle CLAP Plugin
+        run: cargo xtask bundle aura-space --release
+
+      - name: Create Linux Zip Package
+        run: |
+          cd target/bundled
+          zip -r ../../aura-space-linux-x86_64.zip aura-space.clap
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-space-linux-x86_64
+          path: aura-space-linux-x86_64.zip
+
+  build-macos:
+    name: Build macOS Universal & Apple Silicon CLAP
+    runs-on: macos-14 # Native Apple Silicon M1/M2 GitHub Runner
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain with Universal Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Build Apple Silicon (ARM64)
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Build Intel Mac (x86_64)
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Create Universal 2 Binary (lipo)
+        run: |
+          mkdir -p target/release
+          lipo -create \
+            target/aarch64-apple-darwin/release/libaura_space.dylib \
+            target/x86_64-apple-darwin/release/libaura_space.dylib \
+            -output target/release/libaura_space.dylib
+          lipo -info target/release/libaura_space.dylib
+
+      - name: Bundle macOS CLAP Bundle
+        run: cargo xtask bundle aura-space --release --no-build
+
+      - name: Ad-hoc Code Sign for macOS Gatekeeper
+        run: codesign --force --deep -s - target/bundled/aura-space.clap
+
+      - name: Verify Bundle Signature
+        run: codesign -dv --verbose=4 target/bundled/aura-space.clap
+
+      - name: Create macOS Zip Package
+        run: |
+          cd target/bundled
+          zip -r ../../aura-space-macos-universal.zip aura-space.clap
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-space-macos-universal
+          path: aura-space-macos-universal.zip
+
+  publish-release:
+    name: Publish Release Packages
+    needs: [build-linux, build-macos]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aura-space-linux-x86_64
+          path: dist/
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aura-space-macos-universal
+          path: dist/
+
+      - name: Upload Assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            dist/aura-space-linux-x86_64.zip
+            dist/aura-space-macos-universal.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
