@@ -20,7 +20,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxcb1-dev libxcb-icccm4-dev libgl1-mesa-dev zip
+          sudo apt-get install -y libx11-dev libxcb1-dev libxcb-icccm4-dev libxcursor-dev libgl1-mesa-dev zip
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -115,8 +115,8 @@ jobs:
 
       - name: Upload Assets to GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v0.1.0' }}
           files: |
             dist/aura-space-linux-x86_64.zip
             dist/aura-space-macos-universal.zip
