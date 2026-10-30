@@ -47,7 +47,7 @@ jobs:
 
   build-macos:
     name: Build macOS Universal & Apple Silicon CLAP
-    runs-on: macos-14 # Native Apple Silicon M1/M2 GitHub Runner
+    runs-on: macos-15 # Native Apple Silicon GitHub Runner (macOS 15 Sequoia)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
